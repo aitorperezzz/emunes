@@ -2,11 +2,12 @@
 #define CPU_MOS6502_H
 
 #include <cstdint>
+#include <map>
 #include <vector>
 
 #include "StatusRegisterBit.h"
 #include "mmio/Mmio.h"
-#include "Opcode.h"
+#include "OpcodeParser.h"
 
 namespace cpu
 {
@@ -15,6 +16,11 @@ namespace cpu
 
     class MOS6502
     {
+    public:
+        bool init(const std::vector<uint8_t> &instructions);
+
+        bool run();
+
     private:
         /// @brief Program counter
         uint8_t pc;
@@ -48,7 +54,7 @@ namespace cpu
 
         mmio::Mmio mmio;
 
-        bool execute();
+        OpcodeParser opcode_parser;
 
         bool update_opcode();
 

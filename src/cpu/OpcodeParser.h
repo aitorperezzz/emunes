@@ -2,29 +2,30 @@
 #define CPU_OPCODE_H
 
 #include <cstdint>
-#include <vector>
+#include <map>
 
 #include "InstructionId.h"
 #include "AddressingMode.h"
-#include "Types.h"
 #include "StatusRegisterBit.h"
 
 namespace cpu
 {
-    class Opcode
+    struct Opcode
+    {
+        InstructionId instruction_id;
+        AddressingMode addressing_mode;
+        std::size_t instruction_size;
+        std::size_t base_cycles;
+    };
+
+    class OpcodeParser
     {
     public:
-        Opcode() = default;
+        OpcodeParser();
 
-        Opcode(uint8_t byte);
+        Opcode parse(const uint8_t byte);
 
-        InstructionId instruction_id;
-
-        AddressingMode addressing_mode;
-
-        InstructionSize instruction_size;
-
-        std::vector<StatusRegisterBit> status_register_bits;
+        std::map<uint8_t, Opcode> opcodes;
     };
 }
 

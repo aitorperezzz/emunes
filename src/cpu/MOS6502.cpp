@@ -1,13 +1,31 @@
 #include <type_traits>
 #include <cstddef>
+#include <iostream>
 
 #include "MOS6502.h"
-#include "Types.h"
-#include "Opcode.h"
 
 namespace cpu
 {
-    bool MOS6502::execute()
+    bool MOS6502::init(const std::vector<uint8_t> &instructions)
+    {
+        // Initialise variables
+        pc = 0;
+        acc = 0;
+        xr = 0;
+        yr = 0;
+        sr = 0;
+        sp = 0;
+        opcode = Opcode();
+        this->instructions.clear();
+        mmio = mmio::Mmio();
+
+        // Keep a copy of the provided instructions
+        this->instructions = instructions;
+
+        return true;
+    }
+
+    bool MOS6502::run()
     {
         // Loop through the instructions
         while (true)
@@ -32,15 +50,17 @@ namespace cpu
         {
             return false;
         }
-        opcode = Opcode(instructions[pc]);
+        opcode = opcode_parser.parse(instructions[pc]);
         return true;
     }
 
     bool MOS6502::execute_instruction()
     {
+        std::cout << "pc " << +pc << std::endl;
         // Take value from memory depending on the addressing mode
         uint16_t address = 0;
         uint8_t value = 0;
+        int8_t signed_value = 0;
         // TODO: if an instruction is only going to write to a memory location, then reading values here
         // is a waste of computation time
         switch (opcode.addressing_mode)
@@ -53,7 +73,7 @@ namespace cpu
             // which is the accumulator
             value = acc;
             break;
-        case AddressingMode::INMEDIATE:
+        case AddressingMode::IMMEDIATE:
             // Immediate addressing allows the programmer to directly specify
             // an 8 bit constant within the instruction
             value = instructions[pc + 1];
@@ -83,6 +103,11 @@ namespace cpu
             value = mmio.get(address);
             break;
         case AddressingMode::RELATIVE:
+            // Relative addressing mode is used by branch instructions (e.g. BEQ, BNE, etc.) which contain a signed 8 bit relative offset
+            // (e.g. -128 to +127) which is added to program counter if the condition is true. As the program counter itself is incremented
+            // during instruction execution by two the effective address range for the target instruction must be
+            // with -126 to +129 bytes of the branch.
+            signed_value = instructions[pc + 1];
             break;
         case AddressingMode::ABSOLUTE:
             // Instructions using absolute addressing contain a full 16 bit address to identify the target location.
@@ -571,38 +596,146 @@ namespace cpu
             // Branches
             // ***************************
 
-        case InstructionId::BCC: // Branch if carry flag clear
-        case InstructionId::BCS: // Branch if carry flag set
-        case InstructionId::BEQ: // Branch if zero flag set
-        case InstructionId::BMI: // Branch if negative flag set
-        case InstructionId::BNE: // Branch if zero flag clear
-        case InstructionId::BPL: // Branch if negative flag clear
-        case InstructionId::BVC: // Branch if overflow flag clear
-        case InstructionId::BVS: // Branch if overflow flag set
+        case InstructionId::BCC:
+            // Branch if carry flag clear
+            // If the carry flag is clear then add the relative displacement
+            // to the program counter to cause a branch to a new location.
+            if (!get_sr_bit(StatusRegisterBit::CARRY))
+            {
+                pc += signed_value;
+            }
+            break;
+        case InstructionId::BCS:
+            // Branch if carry flag set
+            // If the carry flag is set then add the relative displacement to the program counter
+            // to cause a branch to a new location.
+            if (get_sr_bit(StatusRegisterBit::CARRY))
+            {
+                pc += signed_value;
+            }
+            break;
+        case InstructionId::BEQ:
+            // Branch if zero flag set
+            // If the zero flag is set then add the relative displacement to the program counter
+            // to cause a branch to a new location.
+            if (get_sr_bit(StatusRegisterBit::ZERO))
+            {
+                pc += signed_value;
+            }
+            break;
+        case InstructionId::BMI:
+            // Branch if negative flag set
+            // If the negative flag is set then add the relative displacement to the program counter
+            // to cause a branch to a new location.
+            if (get_sr_bit(StatusRegisterBit::NEGATIVE))
+            {
+                pc += signed_value;
+            }
+            break;
+        case InstructionId::BNE:
+            // Branch if zero flag clear
+            // If the zero flag is clear then add the relative displacement to the program counter
+            // to cause a branch to a new location.
+            if (!get_sr_bit(StatusRegisterBit::ZERO))
+            {
+                pc += signed_value;
+            }
+            break;
+        case InstructionId::BPL:
+            // Branch if negative flag clear
+            // If the negative flag is clear then add the relative displacement to the program counter
+            // to cause a branch to a new location.
+            if (!get_sr_bit(StatusRegisterBit::NEGATIVE))
+            {
+                pc += signed_value;
+            }
+            break;
+        case InstructionId::BVC:
+            // Branch if overflow flag clear
+            // If the overflow flag is clear then add the relative displacement to the program counter
+            // to cause a branch to a new location.
+            if (!get_sr_bit(StatusRegisterBit::OVERFLOW))
+            {
+                pc += signed_value;
+            }
+            break;
+        case InstructionId::BVS:
+            // Branch if overflow flag set
+            // If the overflow flag is set then add the relative displacement to the program counter
+            // to cause a branch to a new location.
+            if (get_sr_bit(StatusRegisterBit::OVERFLOW))
+            {
+                pc += signed_value;
+            }
+            break;
 
             // ***************************
             // Status flag changes
             // ***************************
 
-        case InstructionId::CLC: // Clear carry flag
-        case InstructionId::CLD: // Clear decimal mode flag
-        case InstructionId::CLI: // Clear interrupt disable flag
-        case InstructionId::CLV: // Clear overflow flag
-        case InstructionId::SEC: // Set carry flag
-        case InstructionId::SED: // Set decimal mode flag
-        case InstructionId::SEI: // Set interrupt disable flag
+        case InstructionId::CLC:
+            // Clear carry flag
+            clear_sr_bit(StatusRegisterBit::CARRY);
+            break;
+        case InstructionId::CLD:
+            // Clear decimal mode flag
+            clear_sr_bit(StatusRegisterBit::DECIMAL);
+            break;
+        case InstructionId::CLI:
+            // Clear interrupt disable flag
+            clear_sr_bit(StatusRegisterBit::INTERRUPT);
+            break;
+        case InstructionId::CLV:
+            // Clear overflow flag
+            clear_sr_bit(StatusRegisterBit::OVERFLOW);
+            break;
+        case InstructionId::SEC:
+            // Set carry flag
+            set_sr_bit(StatusRegisterBit::CARRY);
+            break;
+        case InstructionId::SED:
+            // Set decimal mode flag
+            set_sr_bit(StatusRegisterBit::DECIMAL);
+            break;
+        case InstructionId::SEI:
+            // Set interrupt disable flag
+            set_sr_bit(StatusRegisterBit::INTERRUPT);
+            break;
 
             // ***************************
             // System functions
             // ***************************
 
-        case InstructionId::BRK: // Force an interrupt
-        case InstructionId::NOP: // No operation
-        case InstructionId::RTI: // Return from interrupt
+        case InstructionId::BRK:
+            // Force an interrupt
+            // The BRK instruction forces the generation of an interrupt request.
+            // The program counter and processor status are pushed on the stack then the IRQ interrupt vector at $FFFE/F
+            // is loaded into the PC and the break flag in the status set to one.
+            push_to_stack(pc);
+            push_to_stack(sr);
+            pc = mmio.get(0xFFFE / 0xF);
+            set_sr_bit(StatusRegisterBit::BREAK);
+            break;
+        case InstructionId::NOP:
+            // No operation
+            // The NOP instruction causes no changes to the processor other than the normal incrementing
+            // of the program counter to the next instruction.
+            break;
+        case InstructionId::RTI:
+            // Return from interrupt
+            // The RTI instruction is used at the end of an interrupt processing routine.
+            // It pulls the processor flags from the stack followed by the program counter.
+            sr = pull_from_stack();
+            pc = pull_from_stack();
+            break;
 
         default:
+            // TODO: exception
             break;
         }
+
+        // Jump as many bytes as indicated by the opcode
+        pc += opcode.instruction_size;
 
         return true;
     }
