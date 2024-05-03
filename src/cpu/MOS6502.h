@@ -3,7 +3,7 @@
 
 #include <cstdint>
 #include <map>
-#include <vector>
+#include <memory>
 
 #include "StatusRegisterBit.h"
 #include "mmio/Mmio.h"
@@ -12,18 +12,24 @@
 namespace cpu
 {
 
-    constexpr uint16_t STACK_ADDRESS = 0x0100;
-
+    /// @brief MOS technologies 6502 chip without decimal mode, as this mode
+    /// was not implemented in the chip included with the NES
     class MOS6502
     {
     public:
-        bool init(const std::vector<uint8_t> &instructions);
+        MOS6502() = default;
 
-        bool run();
+        /// @brief Constructor
+        /// @param mmio MMIO object
+        MOS6502(const std::shared_ptr<mmio::Mmio> &mmio);
+
+        /// @brief Reset the chip. This should kickstart it to run
+        /// @return True if the operation was successful
+        bool reset();
 
     private:
         /// @brief Program counter
-        uint8_t pc;
+        uint16_t pc;
 
         /// @brief Accumulator
         uint8_t acc;
@@ -45,19 +51,24 @@ namespace cpu
         /// bit 0: Carry
         uint8_t sr;
 
-        /// @brief Stack pointer
+        /// @brief Stack pointer (from the stack offset)
         uint8_t sp;
 
+        /// @brief The current opcode
         Opcode opcode;
 
-        std::vector<uint8_t> instructions;
+        /// @brief Link to mmio for all calls to the bus
+        std::shared_ptr<mmio::Mmio> mmio;
 
-        mmio::Mmio mmio;
-
+        /// @brief The opcode parser that will decode bytes into opcodes
         OpcodeParser opcode_parser;
 
-        bool update_opcode();
+        /// @brief This is the main loop of the CPU
+        /// @return True if the operation was successful
+        bool run();
 
+        /// @brief Execute the instruction indicated by the current opcode
+        /// @return True if the operation was successful
         bool execute_instruction();
 
         /// @brief Return the specified bit in the status register
@@ -65,14 +76,21 @@ namespace cpu
         /// @return The value stored at the specified position in the status register
         uint8_t get_sr_bit(StatusRegisterBit bit);
 
-        void set_sr_bit(StatusRegisterBit bit);
+        /// @brief Set the corresponding bit in the status register
+        /// @param bit The bit position that will be accessed
+        /// @param value The value (a 0 or a 1)
+        void set_sr_bit(StatusRegisterBit bit, const uint8_t value);
 
-        void clear_sr_bit(StatusRegisterBit bit);
-
+        /// @brief Push a value to the stack
+        /// @param value The value to push
         void push_to_stack(uint8_t value);
 
+        /// @brief Pull a value from the stack
+        /// @return The value that was on top of the stack
         uint8_t pull_from_stack();
 
+        /// @brief Perform add with carry
+        /// @param value Value on which to perform the operation
         void adc(uint8_t value);
     };
 }

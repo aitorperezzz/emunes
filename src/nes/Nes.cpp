@@ -1,6 +1,7 @@
 #include <fstream>
 #include <iostream>
 #include <map>
+#include <vector>
 
 #include "nes/Nes.h"
 
@@ -11,15 +12,16 @@ static constexpr size_t CHR_ROM_UNIT_SIZE = 8192;
 
 namespace nes
 {
-    Nes::Nes(const std::filesystem::path &rom_filename)
+    Nes::Nes()
     {
-        this->rom_filename = rom_filename;
+        mmio = std::make_shared<mmio::Mmio>();
+        cpu = cpu::MOS6502(mmio);
     }
 
-    bool Nes::init()
+    bool Nes::insert_cartridge(const std::filesystem::path &filename)
     {
         // Open the file to read
-        std::ifstream rom_file(this->rom_filename, std::ios_base::in | std::ios_base::binary);
+        std::ifstream rom_file(filename, std::ios_base::in | std::ios_base::binary);
 
         // Header (16 bytes)
         std::vector<uint8_t> header(16);
@@ -52,11 +54,6 @@ namespace nes
         rom_file.seekg(prg_rom_offset);
         std::vector<uint8_t> prg_rom(prg_rom_size);
         rom_file.read(reinterpret_cast<char *>(prg_rom.data()), prg_rom.size());
-        if (!cpu.init(prg_rom))
-        {
-            std::cout << "Could not initialise MOS6502" << std::endl;
-            return false;
-        }
 
         // CHR ROM
 
@@ -67,8 +64,13 @@ namespace nes
         return true;
     }
 
-    bool Nes::run()
+    bool Nes::init()
     {
-        return cpu.run();
+        if (!cpu.reset())
+        {
+            std::cout << "Could not initialise MOS6502" << std::endl;
+            return false;
+        }
+        return true;
     }
 }

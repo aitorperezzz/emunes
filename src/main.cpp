@@ -14,8 +14,7 @@ int main(int argc, char *argv[])
     std::filesystem::path rom_filename = argv[1];
 
     // Create a NES emulator feeding it the name of the file
-    nes::Nes nes(rom_filename);
-    nes.init();
-    nes.run();
-    return 0;
+    nes::Nes nes;
+    nes.insert_cartridge(rom_filename);
+    return nes.init();
 }

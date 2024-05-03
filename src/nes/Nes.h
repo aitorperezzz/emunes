@@ -10,15 +10,16 @@ namespace nes
     class Nes
     {
     public:
-        Nes(const std::filesystem::path &rom_filename);
+        Nes();
+
+        bool insert_cartridge(const std::filesystem::path &filename);
 
         bool init();
 
-        bool run();
-
     private:
         cpu::MOS6502 cpu;
-        std::filesystem::path rom_filename;
+
+        std::shared_ptr<mmio::Mmio> mmio;
     };
 }
 

@@ -7,19 +7,19 @@ namespace cpu
 {
     enum class AddressingMode : uint8_t
     {
-        IMPLICIT,
-        ACCUMULATOR,
-        IMMEDIATE,
-        ZERO_PAGE,
-        ZERO_PAGE_X,
-        ZERO_PAGE_Y,
-        RELATIVE,
-        ABSOLUTE,
-        ABSOLUTE_X,
-        ABSOLUTE_Y,
-        INDIRECT,
-        INDEXED_INDIRECT,
-        INDIRECT_INDEXED
+        IMP, // Implicit
+        ACC, // Accumulator
+        IMM, // Immediate
+        ZP0, // Zero page
+        ZPX, // Zero page X
+        ZPY, // Zero page Y
+        REL, // Relative
+        ABS, // Absolute
+        ABX, // Absolute X
+        ABY, // Absolute Y
+        IND, // Indirect
+        IXI, // Indexed indirect
+        IIX  // Indirect indexed
     };
 }
 
