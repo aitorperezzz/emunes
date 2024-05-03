@@ -8,7 +8,7 @@ namespace cpu
     {
         // Load/store operations
 
-        // LDA - Load ACC
+        // LDA - Load Accumulator
         opcodes.emplace(0xA9, Opcode{InstructionId::LDA, AddressingMode::IMM, 2, 2});
         opcodes.emplace(0xA5, Opcode{InstructionId::LDA, AddressingMode::ZP0, 2, 3});
         opcodes.emplace(0xB5, Opcode{InstructionId::LDA, AddressingMode::ZPX, 2, 4});
@@ -29,7 +29,7 @@ namespace cpu
         opcodes.emplace(0xB4, Opcode{InstructionId::LDY, AddressingMode::ZPX, 2, 4});
         opcodes.emplace(0xAC, Opcode{InstructionId::LDY, AddressingMode::ABS, 3, 4});
         opcodes.emplace(0xBC, Opcode{InstructionId::LDY, AddressingMode::ABX, 3, 4});
-        // STA - Store ACC
+        // STA - Store Accumulator
         opcodes.emplace(0x85, Opcode{InstructionId::STA, AddressingMode::ZP0, 2, 3});
         opcodes.emplace(0x95, Opcode{InstructionId::STA, AddressingMode::ZPX, 2, 4});
         opcodes.emplace(0x8D, Opcode{InstructionId::STA, AddressingMode::ABS, 3, 4});
@@ -48,13 +48,13 @@ namespace cpu
 
         // Register transfers
 
-        // TAX - Transfer ACC to X
+        // TAX - Transfer Accumulator to X
         opcodes.emplace(0xAA, Opcode{InstructionId::TAX, AddressingMode::IMP, 1, 2});
-        // TAY - Transfer ACC to Y
+        // TAY - Transfer Accumulator to Y
         opcodes.emplace(0xA8, Opcode{InstructionId::TAY, AddressingMode::IMP, 1, 2});
-        // TXA - Transfer X to ACC
+        // TXA - Transfer X to Accumulator
         opcodes.emplace(0x8A, Opcode{InstructionId::TXA, AddressingMode::IMP, 1, 2});
-        // TYA - Transfer Y to ACC
+        // TYA - Transfer Y to Accumulator
         opcodes.emplace(0x98, Opcode{InstructionId::TYA, AddressingMode::IMP, 1, 2});
 
         // Stack operations
@@ -63,11 +63,11 @@ namespace cpu
         opcodes.emplace(0xBA, Opcode{InstructionId::TSX, AddressingMode::IMP, 1, 2});
         // TXS - Transfer X to Stack Pointer
         opcodes.emplace(0x9A, Opcode{InstructionId::TXS, AddressingMode::IMP, 1, 2});
-        // PHA - Push ACC
+        // PHA - Push Accumulator
         opcodes.emplace(0x48, Opcode{InstructionId::PHA, AddressingMode::IMP, 1, 3});
         // PHP - Push Processor Status
         opcodes.emplace(0x08, Opcode{InstructionId::PHP, AddressingMode::IMP, 1, 3});
-        // PLA - Pull ACC
+        // PLA - Pull Accumulator
         opcodes.emplace(0x68, Opcode{InstructionId::PLA, AddressingMode::IMP, 1, 4});
         // PLP - Pull Processor Status
         opcodes.emplace(0x28, Opcode{InstructionId::PLP, AddressingMode::IMP, 1, 4});
