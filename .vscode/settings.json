@@ -53,7 +53,8 @@
         "streambuf": "cpp",
         "cinttypes": "cpp",
         "typeinfo": "cpp",
-        "filesystem": "cpp"
+        "filesystem": "cpp",
+        "optional": "cpp"
     },
     "C_Cpp.default.includePath": [
         "src"

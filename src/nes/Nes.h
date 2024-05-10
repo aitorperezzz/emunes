@@ -7,20 +7,24 @@
 
 namespace nes
 {
-    class Nes
-    {
-    public:
-        Nes();
+class Nes
+{
+  public:
+    Nes();
 
-        bool insert_cartridge(const std::filesystem::path &filename);
+    /// @brief  Insert a cartridge in the NES and perform all the necessary housekeeping
+    bool insert_cartridge(const std::filesystem::path &filename);
 
-        bool init();
+    /// @brief Press the power button
+    bool init();
 
-    private:
-        cpu::MOS6502 cpu;
+  private:
+    /// @brief The MOS6502
+    cpu::MOS6502 cpu;
 
-        std::shared_ptr<mmio::Mmio> mmio;
-    };
-}
+    /// @brief Shared pointer to the address bus
+    std::shared_ptr<mmio::Mmio> mmio;
+};
+} // namespace nes
 
 #endif
