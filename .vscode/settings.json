@@ -54,11 +54,18 @@
         "cinttypes": "cpp",
         "typeinfo": "cpp",
         "filesystem": "cpp",
-        "optional": "cpp"
+        "optional": "cpp",
+        "strstream": "cpp",
+        "list": "cpp",
+        "set": "cpp"
     },
     "C_Cpp.default.includePath": [
-        "src"
+        "src",
+        "test",
+        "/usr/include"
     ],
     "C_Cpp.default.cppStandard": "c++17",
     "C_Cpp.default.compilerPath": "/usr/bin/g++",
+    "search.useIgnoreFiles": false,
+    "explorer.excludeGitIgnore": true,
 }
