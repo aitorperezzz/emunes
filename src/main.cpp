@@ -16,6 +16,8 @@ int main(int argc, char *argv[])
 
     // Create a NES emulator
     nes::Nes nes;
+    // TODO: choose a better filename
+    nes.set_log_filename("nestest.log");
 
     // Insert the cartridge (check file consistency, prepare mmio, etc...)
     if (!nes.insert_cartridge(rom_filename))

@@ -89,8 +89,12 @@ enum class InstructionId : uint8_t
     RTI  // Return from interrupt
 };
 
-/// @brief Return a string with a description of the instruction
-std::string print_instruction(const InstructionId instruction_id);
+/// @brief Return a string with the mnemonic of the instruction
+std::string print_instruction_id(const InstructionId instruction_id);
+
+/// @brief Return a string with the description of the instruction
+std::string print_instruction_description(const InstructionId instruction_id);
+
 } // namespace cpu
 
 #endif

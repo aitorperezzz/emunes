@@ -6,23 +6,38 @@
 #include "common/Logging.h"
 #include "nes/Nes.h"
 
+namespace nes
+{
+
 static constexpr size_t HEADER_SIZE = 16;
 static constexpr size_t TRAINER_SIZE = 512;
 static constexpr size_t PRG_ROM_UNIT_SIZE = 16384;
 static constexpr size_t CHR_ROM_UNIT_SIZE = 8192;
 
-namespace nes
-{
 Nes::Nes()
 {
     mmio = std::make_shared<mmio::Mmio>();
     cpu = cpu::MOS6502(mmio);
+
+    // Create a log file and pass it to all the interested components
+    this->log_file = std::make_shared<common::LogFile>();
+    cpu.set_log_file(log_file);
+}
+
+void Nes::set_log_filename(const std::string &filename)
+{
+    this->log_file->set_filename(filename);
 }
 
 bool Nes::insert_cartridge(const std::filesystem::path &filename)
 {
     // Open the file to read
     std::ifstream rom_file(filename, std::ios_base::in | std::ios_base::binary);
+    if (!rom_file.is_open())
+    {
+        common::Log(common::LogLevel::ERROR, "File " + filename.string() + " could not be opened");
+        return false;
+    }
 
     // Header (16 bytes)
     std::vector<uint8_t> header(16);
@@ -67,6 +82,16 @@ bool Nes::insert_cartridge(const std::filesystem::path &filename)
     mmio->set_prg_rom(prg_rom);
 
     return true;
+}
+
+void Nes::override_reset_vector(const uint16_t address)
+{
+    cpu.override_reset_vector(address);
+}
+
+void Nes::set_max_instructions(const size_t num_instructions)
+{
+    cpu.set_max_instructions(num_instructions);
 }
 
 bool Nes::init()
