@@ -26,12 +26,13 @@ void TestNestest::test(void)
     std::string rom_filename = "roms/test/nestest/nestest.nes";
     std::string ref_filename = "roms/test/nestest/nestest.log";
     std::string out_filename = "nestest.output.log";
+    const size_t max_instructions = 5003;
 
     // Create and configure all the elements in the emulator
     nes::Nes nes;
     nes.set_log_filename(out_filename);
     nes.insert_cartridge(rom_filename);
-    nes.set_max_instructions(8991);
+    nes.set_max_instructions(max_instructions);
     nes.override_reset_vector(0xC000);
 
     // Run
@@ -42,13 +43,19 @@ void TestNestest::test(void)
     std::ifstream ref_file(ref_filename);
     std::ifstream out_file(out_filename);
     std::string out_string, ref_string;
-    size_t num_lines = 0;
-    while (std::getline(ref_file, ref_string))
+    for (size_t i = 0; i < max_instructions; i++)
     {
+        // Read a new line from reference and output file
+        if (!std::getline(ref_file, ref_string))
+        {
+            std::cout << "Test is supposed to run until instruction " << max_instructions << " but line " << i + 1
+                      << " was not found in the reference file" << std::endl;
+            CPPUNIT_ASSERT(false);
+            return;
+        }
         if (!std::getline(out_file, out_string))
         {
-            std::cout << "Line number " << num_lines + 1 << " is found in reference file and not in output file"
-                      << std::endl;
+            std::cout << "Line number " << i + 1 << " is found in reference file and not in output file" << std::endl;
             CPPUNIT_ASSERT(false);
             return;
         }
@@ -59,11 +66,11 @@ void TestNestest::test(void)
 
         if (ref_string != out_string)
         {
-            std::cout << "Line number " << num_lines + 1 << " does not match" << std::endl;
+            std::cout << "Line number " << i + 1 << " does not match" << std::endl;
             std::cout << "Ref line: " << ref_string << std::endl;
             std::cout << "Out line: " << out_string << std::endl;
             CPPUNIT_ASSERT(false);
         }
-        num_lines++;
     }
+    std::cout << "Tested " << max_instructions << " lines of nestest.log" << std::endl;
 }

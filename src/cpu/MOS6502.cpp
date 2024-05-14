@@ -142,13 +142,13 @@ void MOS6502::resolve()
         // by taking the 8 bit zero page address from the instruction and adding the current value of the X register to
         // it. For example if the X register contains $0F and the instruction LDA $80,X is executed then the accumulator
         // will be loaded from $008F (e.g. $80 + $0F => $8F).
-        address = instruction_byte_1 + xr;
+        address = (instruction_byte_1 + xr) & 0xFF;
         break;
     case AddressingMode::ZPY:
         // The address to be accessed by an instruction using indexed zero page addressing is calculated
         // by taking the 8 bit zero page address from the instruction and adding the current value of the Y register to
         // it. This mode can only be used with the LDX and STX instructions.
-        address = instruction_byte_1 + yr;
+        address = (instruction_byte_1 + yr) & 0xFF;
         break;
     case AddressingMode::REL:
         // Relative addressing mode is used by branch instructions (e.g. BEQ, BNE, etc.) which contain a signed 8 bit
@@ -182,7 +182,8 @@ void MOS6502::resolve()
         // Find the address given by the instruction
         intermediate_address = ((uint16_t)instruction_byte_2 << 8) + (uint16_t)instruction_byte_1;
         // Find the address that is stored at the location
-        address = ((uint16_t)mmio->get(intermediate_address + 1) << 8) + (uint16_t)mmio->get(intermediate_address);
+        address = ((uint16_t)mmio->get((intermediate_address & 0xFF00) + ((intermediate_address + 1) & 0xFF)) << 8) +
+                  (uint16_t)mmio->get(intermediate_address);
         break;
     }
     case AddressingMode::IXI:
@@ -190,16 +191,18 @@ void MOS6502::resolve()
         // address of the table is taken from the instruction and the X register added to it (with zero page wrap
         // around) to give the location of the least significant byte of the target address.
         // Perform indexing
-        intermediate_address = instruction_byte_1 + xr;
+        intermediate_address = (instruction_byte_1 + xr) & 0xFF;
         // Find the address stored there
-        address = ((uint16_t)mmio->get(intermediate_address + 1) << 8) + (uint16_t)mmio->get(intermediate_address);
+        address = ((uint16_t)mmio->get((uint16_t)((intermediate_address + 1) & 0xFF)) << 8) +
+                  (uint16_t)mmio->get(intermediate_address);
         break;
     case AddressingMode::IIX:
         // Indirect indexed addressing is the most common indirection mode used on the 6502. The instruction contains
         // the zero page location of the least significant byte of 16 bit address. The Y register is dynamically added
-        // to this value to generated the actual target address for operation.
+        // to this value to generate the actual target address for operation.
         // Perform indirection
-        intermediate_address = mmio->get(((uint16_t)instruction_byte_1 << 8) + (uint16_t)(instruction_byte_1 + 1));
+        intermediate_address =
+            (mmio->get((uint16_t)((instruction_byte_1 + 1) & 0xFF)) << 8) + mmio->get((uint16_t)instruction_byte_1);
         // Perform indexing
         address = intermediate_address + (uint16_t)yr;
         break;
@@ -936,15 +939,15 @@ std::string MOS6502::disassemble()
         break;
     case AddressingMode::ZPX:
         // Zero page X
-        // example "LDY $33,X @ 33 = AA"
+        // example "LDX $00,Y @ 78 = 33"
         details += "$" + common::print_hex(instruction_byte_1, sizeof(instruction_byte_1)) + ",X @ " +
-                   common::print_hex(address, sizeof(address)) + " = " + common::print_hex(value, sizeof(value));
+                   common::print_hex((uint8_t)address, 1) + " = " + common::print_hex(value, sizeof(value));
         break;
     case AddressingMode::ZPY:
         // Zero page Y
         // example "LDY $33,Y @ 33 = AA"
         details += "$" + common::print_hex(instruction_byte_1, sizeof(instruction_byte_1)) + ",Y @ " +
-                   common::print_hex(address, sizeof(address)) + " = " + common::print_hex(value, sizeof(value));
+                   common::print_hex((uint8_t)address, 1) + " = " + common::print_hex(value, sizeof(value));
         break;
     case AddressingMode::REL:
         // Relative
@@ -955,15 +958,11 @@ std::string MOS6502::disassemble()
         details += "$" + common::print_hex(address, sizeof(address));
         switch (opcode.instruction_id)
         {
-        case InstructionId::LDA:
-        case InstructionId::LDX:
-        case InstructionId::LDY:
-        case InstructionId::STA:
-        case InstructionId::STX:
-        case InstructionId::STY:
-            details += " = " + common::print_hex(value, sizeof(value));
+        case InstructionId::JMP:
+        case InstructionId::JSR:
             break;
         default:
+            details += " = " + common::print_hex(value, sizeof(value));
             break;
         }
         break;
