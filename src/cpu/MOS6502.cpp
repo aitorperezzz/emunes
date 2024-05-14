@@ -218,7 +218,8 @@ bool MOS6502::execute()
     advance_pc = true;
 
     // Decide depending on the instruction id
-    common::Log(common::LogLevel::DEBUG, "Execute instruction " + print_instruction_id(opcode.instruction_id));
+    common::Log(common::LogLevel::DEBUG, "Execute instruction " + print_instruction_id(opcode.instruction_id) + ": " +
+                                             print_instruction_description(opcode.instruction_id));
     switch (opcode.instruction_id)
     {
         // ***************************
